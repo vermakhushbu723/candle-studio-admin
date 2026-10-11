@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after { box-sizing: border-box; }
+/* Compact admin scale: Tailwind rem sizes shrink ~12% */
+html { font-size: 14px; }
+body {
+  margin: 0;
+  background: #f7f3ef;
+  color: #3A1507;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, p { margin: 0; }
+h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; font-weight: 500; color: #3A1507; }
+a { color: inherit; text-decoration: none; }
+
+@layer components {
+  .panel { @apply rounded-2xl bg-white p-5 shadow-soft; }
+}
+.ant-layout-sider-children { display: flex; flex-direction: column; }
+.ant-table-wrapper .ant-table { border-radius: 16px; }
+
+/* Scroll without a visible scrollbar (sidebar menu, lists) */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+/* Thin, subtle scrollbar for panes */
+.thin-scroll { scrollbar-width: thin; scrollbar-color: rgba(58,21,7,.18) transparent; }
+.thin-scroll::-webkit-scrollbar { width: 6px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgba(58,21,7,.18); border-radius: 99px; }
