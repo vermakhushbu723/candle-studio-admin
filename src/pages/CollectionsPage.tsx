@@ -179,6 +179,11 @@ function CollectionEditor({ id, products, onSaved, onDeleted }: { id: string | n
             <Form.Item name="image" label="Cover image URL" extra="e.g. /images/products/festive-diya-set-1.webp"><Input /></Form.Item>
             <Form.Item name="tone" label="Tile colour"><ColorPicker showText /></Form.Item>
             <Form.Item name="isActive" label="Live on website" valuePropName="checked" className="mb-0"><Switch /></Form.Item>
+            {!collection && (
+              <Form.Item name="notify" label="Notify customers" valuePropName="checked" className="mb-0" tooltip="Sends a push notification + email to customers who want offer updates, as soon as you save.">
+                <Switch />
+              </Form.Item>
+            )}
           </Pane>
 
           {image && (

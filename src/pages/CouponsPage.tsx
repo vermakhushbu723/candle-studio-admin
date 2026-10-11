@@ -150,6 +150,11 @@ function CouponEditor({ coupon, onSaved, onDeleted }: { coupon: Coupon | null; o
             <Form.Item name="usageLimit" label="Usage limit (0 = unlimited)"><InputNumber min={0} className="w-full" /></Form.Item>
             <Form.Item name="expiry" label="Expiry" rules={[{ required: true }]}><DatePicker className="w-full" /></Form.Item>
             <Form.Item name="isActive" label="Active" valuePropName="checked"><Switch /></Form.Item>
+            {!coupon && (
+              <Form.Item name="notify" label="Notify customers" valuePropName="checked" tooltip="Sends a push notification + email to customers who want offer updates, as soon as you save.">
+                <Switch />
+              </Form.Item>
+            )}
             <Form.Item name="description" label="Description (shown to customers)" className="sm:col-span-2"><Input /></Form.Item>
           </Form>
         </Pane>

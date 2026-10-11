@@ -13,7 +13,10 @@ interface Detail {
   customer: Customer;
   stats: { orders: number; spent: number; lastOrder: string | null };
   orders: { id: string; total: number; status: string; date: string; items: number }[];
+  addresses: { line1: string; city: string; state: string; pincode: string; name?: string; phone?: string; usedAt: string }[];
 }
+
+const LOGIN: Record<string, string> = { phone: 'Mobile + OTP', google: 'Google', password: 'Password' };
 
 export default function CustomersPage() {
   const list = useList<Customer>('/customers');
@@ -38,7 +41,7 @@ export default function CustomersPage() {
         avatar: <Avatar text={c.name} tone={c.isBlocked ? 'char' : 'cocoa'} />,
         title: c.name,
         meta: `${c.orders} orders · ${inr(c.spent)}${c.isBlocked ? ' · blocked' : ''}`,
-        preview: c.email,
+        preview: [c.phone && `+91 ${c.phone}`, c.email].filter(Boolean).join(' · ') || '—',
         time: shortTime(c.lastOrder ?? c.createdAt),
       })}
       renderDetail={(key) => <CustomerDetail id={key} onChanged={list.reload} />}
@@ -89,10 +92,33 @@ function CustomerDetail({ id, onChanged }: { id: string; onChanged: () => void }
           <StatCard label="Last order" value={<span className="text-base">{ago(d.stats.lastOrder ?? undefined)}</span>} icon={<span>•</span>} tone="gold" />
         </div>
         <Pane className="grid gap-4 sm:grid-cols-3">
-          <Field label="Email">{c.email}</Field>
+          <Field label="Email">{c.email || '—'}</Field>
           <Field label="Mobile">{c.phone ? `+91 ${c.phone}` : '—'}</Field>
           <Field label="Status">{c.isBlocked ? 'Blocked' : 'Active'}</Field>
+          <Field label="Signs in with">{LOGIN[c.loginMethod ?? ''] ?? '—'}{c.googleLinked && c.loginMethod !== 'google' ? ' (Google linked)' : ''}</Field>
+          <Field label="Joined">{date(c.createdAt)}</Field>
+          <Field label="Last login">{c.lastLoginAt ? ago(c.lastLoginAt) : '—'}</Field>
+          <Field label="Offer updates">{c.notifyOffers === false ? 'Turned off' : 'On (email + push)'}</Field>
+          <Field label="Push devices">
+            {Array.isArray(c.pushDevices) && c.pushDevices.length
+              ? c.pushDevices.map((p, i) => <span key={i} className="block">{p.device ?? 'Browser'} <span className="text-char/45">· {date(p.addedAt)}</span></span>)
+              : 'None — hasn’t turned on notifications'}
+          </Field>
         </Pane>
+        {d.addresses.length > 0 && (
+          <Pane>
+            <h4 className="mb-3 font-sans text-sm font-semibold">Delivery addresses ({d.addresses.length})</h4>
+            <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">
+              {d.addresses.map((a, i) => (
+                <li key={i} className="rounded-xl border border-black/5 p-3 text-sm">
+                  <p className="font-medium">{a.name}{a.phone ? ` · +91 ${a.phone}` : ''}</p>
+                  <p className="text-char/65">{a.line1}, {a.city}, {a.state} – {a.pincode}</p>
+                  <p className="mt-1 text-xs text-char/45">Last used {date(a.usedAt)}</p>
+                </li>
+              ))}
+            </ul>
+          </Pane>
+        )}
         <Pane>
           <h4 className="mb-3 font-sans text-sm font-semibold">Orders ({d.orders.length})</h4>
           <Table

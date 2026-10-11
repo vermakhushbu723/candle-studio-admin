@@ -84,6 +84,10 @@ export interface Customer {
   orders: number;
   spent: number;
   lastOrder?: string;
+  loginMethod?: 'phone' | 'google' | 'password';
+  googleLinked?: boolean;
+  notifyOffers?: boolean;
+  pushDevices?: number | { device?: string; addedAt: string }[];
 }
 
 export interface Note {

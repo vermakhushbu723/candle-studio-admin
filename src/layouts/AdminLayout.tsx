@@ -1,5 +1,6 @@
 import {
   AppstoreOutlined,
+  NotificationOutlined,
   BellOutlined,
   CustomerServiceOutlined,
   DashboardOutlined,
@@ -34,6 +35,7 @@ const titles: Record<string, string> = {
   '/coupons': 'Coupons',
   '/inquiries': 'Contact Enquiries',
   '/tickets': 'Chat Requests',
+  '/notifications': 'Notifications',
   '/settings': 'Settings',
 };
 
@@ -79,6 +81,7 @@ export default function AdminLayout() {
       { key: '/collections', icon: <FolderOpenOutlined />, label: 'Collections' },
       { key: '/customers', icon: <TeamOutlined />, label: 'Customers' },
       { key: '/coupons', icon: <TagsOutlined />, label: 'Coupons' },
+      { key: '/notifications', icon: <NotificationOutlined />, label: 'Notifications' },
     ]),
     ...group('Inbox', [
       { key: '/inquiries', icon: <MessageOutlined />, label: label('Contact Enquiries', counts.inquiries) },

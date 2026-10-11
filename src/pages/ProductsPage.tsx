@@ -194,6 +194,11 @@ function ProductEditor({ id, onSaved, onDeleted }: { id: string | null; onSaved:
           </Pane>
           <Pane className="flex flex-wrap gap-8">
             <Form.Item name="isActive" label="Live on website" valuePropName="checked" className="mb-0"><Switch /></Form.Item>
+            {!product && (
+              <Form.Item name="notify" label="Notify customers" valuePropName="checked" className="mb-0" tooltip="Sends a push notification + email to customers who want offer updates, as soon as you save.">
+                <Switch />
+              </Form.Item>
+            )}
             <Form.Item name="fragrances" label="Fragrance choice at checkout" valuePropName="checked" className="mb-0"><Switch /></Form.Item>
           </Pane>
         </Form>

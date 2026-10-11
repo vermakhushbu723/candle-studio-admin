@@ -7,6 +7,7 @@ import CustomersPage from '@/pages/CustomersPage';
 import DashboardPage from '@/pages/DashboardPage';
 import InquiriesPage from '@/pages/InquiriesPage';
 import LoginPage from '@/pages/LoginPage';
+import NotificationsPage from '@/pages/NotificationsPage';
 import OrdersPage from '@/pages/OrdersPage';
 import ProductsPage from '@/pages/ProductsPage';
 import SettingsPage from '@/pages/SettingsPage';
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
       { path: 'coupons', element: <CouponsPage /> },
       { path: 'inquiries', element: <InquiriesPage /> },
       { path: 'tickets', element: <TicketsPage /> },
+      { path: 'notifications', element: <NotificationsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: '*', element: <Result status="404" title="Page not found" extra={<Link to="/"><Button type="primary">Back to dashboard</Button></Link>} /> },
     ],
