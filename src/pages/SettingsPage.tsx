@@ -1,9 +1,10 @@
-import { ApiOutlined, CarOutlined, LockOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { ApiOutlined, CarOutlined, GiftOutlined, LockOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Form, Input, message } from 'antd';
 import type { ReactNode } from 'react';
 import { api, API_URL, WEBSITE_URL } from '@/api/client';
 import MasterDetail, { DetailHeader, Pane } from '@/components/MasterDetail';
 import ShippingSettings from '@/components/ShippingSettings';
+import FollowOfferSettings from '@/components/FollowOfferSettings';
 import { Field } from '@/components/ui';
 import { useAuth, type AdminUser } from '@/store/authStore';
 
@@ -16,6 +17,7 @@ interface Section {
 
 const sections: Section[] = [
   { key: 'shipping', title: 'Shipping charges', preview: 'Delivery fee & free-shipping limit', icon: <CarOutlined /> },
+  { key: 'follow', title: 'Follow & Save offer', preview: 'Footer QR code · follow us for a coupon', icon: <GiftOutlined /> },
   { key: 'profile', title: 'Profile', preview: 'Name, email and phone', icon: <UserOutlined /> },
   { key: 'password', title: 'Password & security', preview: 'Change your admin password', icon: <LockOutlined /> },
   { key: 'system', title: 'System', preview: 'API, storefront & role', icon: <ApiOutlined /> },
@@ -96,6 +98,7 @@ export default function SettingsPage() {
                 </Pane>
               )}
               {key === 'shipping' && <ShippingSettings />}
+              {key === 'follow' && <FollowOfferSettings />}
               {key === 'system' && (
                 <Pane className="grid max-w-2xl gap-4 sm:grid-cols-3">
                   <Field label="API endpoint">{API_URL}</Field>
