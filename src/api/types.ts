@@ -137,11 +137,19 @@ export interface Coupon {
 // Labels shared with the storefront
 export const LINES = { pearled: 'Pearled', handcrafted: 'Handcrafted' } as const;
 export const CATEGORIES: Record<string, string> = {
+  // Current catalogue
+  'pooja-festive': 'Pooja & Diyas',
+  'food-inspired': 'Sweets & Treats',
+  'bubble-candles': 'Bubble Candles',
+  floral: 'Bouquets & Roses',
+  'floating-candles': 'Floating Candles',
+  'jars-glass': 'Jars & Glass',
+  tealights: 'Tea Lights',
+  'cute-gifts': 'Cute & Gifting',
+  // Earlier ranges (hidden products)
   'pearl-kits': 'Pearl Decor Kits',
   refills: 'Refills & Scent Bar',
-  'food-inspired': 'Food Inspired',
   'love-in-the-air': 'Love in the Air',
-  floral: 'Floral',
   luxury: 'Luxury & Festive',
   'wax-fresheners': 'Wax Fresheners',
 };

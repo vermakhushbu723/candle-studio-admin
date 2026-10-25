@@ -13,7 +13,7 @@ const NEW = '__new';
 const MOODS = ['budget', 'self', 'calm', 'gift', 'floral', 'host', 'fresh', 'value', 'cozy', 'fun', 'festive', 'romance'];
 const BADGES = ['Most Popular', 'Bestseller', 'Hot Selling', 'New', 'Set of 2', 'Tester Kit', 'Limited'];
 const options = (o: Record<string, string> | string[]) => (Array.isArray(o) ? o.map((v) => ({ value: v, label: v })) : Object.entries(o).map(([value, label]) => ({ value, label })));
-const chips = ['All', 'Pearled', 'Handcrafted', 'Low stock'];
+const chips = ['All', 'Live', 'Hidden', 'Low stock'];
 
 export default function ProductsPage() {
   const [params] = useSearchParams();
@@ -25,7 +25,7 @@ export default function ProductsPage() {
   const onChip = (v: string) => {
     setChip(v);
     setSelected(null);
-    list.update({ line: v === 'Pearled' ? 'pearled' : v === 'Handcrafted' ? 'handcrafted' : undefined, stock: v === 'Low stock' ? 'low' : undefined });
+    list.update({ active: v === 'Live' ? 'true' : v === 'Hidden' ? 'false' : undefined, stock: v === 'Low stock' ? 'low' : undefined });
   };
 
   return (
@@ -42,8 +42,8 @@ export default function ProductsPage() {
       renderRow={(p) => ({
         avatar: <Avatar src={assetUrl(p.images[0])} text={p.name} />,
         title: p.name,
-        meta: `${LINES[p.line]} · ${CATEGORIES[p.category] ?? p.category}${p.isActive ? '' : ' · hidden'}`,
-        preview: `${inr(p.price)} · ${p.soldCount} sold · ★ ${p.rating}`,
+        meta: `${CATEGORIES[p.category] ?? p.category} · ${p.subtitle || LINES[p.line]}${p.isActive ? '' : ' · hidden'}`,
+        preview: `${inr(p.price)} · ${p.soldCount} sold${p.reviews > 0 ? ` · ★ ${p.rating}` : ''}`,
         badge: (
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.stock === 0 ? 'bg-red-50 text-red-600' : p.stock < 10 ? 'bg-[#F7EBCB] text-[#8a6d10]' : 'bg-cocoa-light text-cocoa-dark'}`}>
             {p.stock === 0 ? 'Sold out' : `${p.stock} left`}
