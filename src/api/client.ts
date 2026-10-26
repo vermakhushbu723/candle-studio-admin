@@ -41,3 +41,38 @@ export interface Paged<T> {
   page: number;
   limit: number;
 }
+
+/** Shrinks a photo to at most 1600px (JPEG) so uploads stay small and fast on the storefront. */
+async function compressImage(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#FFFFFF'; // transparent PNGs get a white background
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read this image.'))), 'image/jpeg', 0.85));
+}
+
+/** Uploads a product photo and returns its public URL. */
+export async function uploadImage(file: File): Promise<string> {
+  const blob = await compressImage(file);
+  const token = useAuth.getState().token;
+  let res: Response;
+  try {
+    res = await fetch(API_URL + '/admin/uploads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/jpeg', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: blob,
+    });
+  } catch {
+    throw new ApiError(0, 'Cannot reach the server.');
+  }
+  const json = await res.json().catch(() => ({}));
+  if (res.status === 401 && token) useAuth.getState().logout();
+  if (!res.ok) throw new ApiError(res.status, json.message ?? `Upload failed (${res.status})`);
+  return json.url as string;
+}

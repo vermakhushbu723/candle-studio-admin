@@ -1,9 +1,10 @@
-import { AppstoreOutlined, DeleteOutlined, EyeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Form, Input, InputNumber, Popconfirm, Select, Skeleton, Switch, message } from 'antd';
+import { AppstoreOutlined, DeleteOutlined, EyeOutlined, MinusCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { AutoComplete, Button, ColorPicker, Form, Input, InputNumber, Popconfirm, Select, Skeleton, Switch, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, assetUrl, WEBSITE_URL } from '@/api/client';
 import { CATEGORIES, LINES, type Collection, type Product } from '@/api/types';
+import ImageListEditor from '@/components/ImageListEditor';
 import MasterDetail, { Avatar, DetailHeader, Pane, fromList } from '@/components/MasterDetail';
 import { useList } from '@/hooks/useList';
 import { useCounts } from '@/store/countsStore';
@@ -14,6 +15,8 @@ const MOODS = ['budget', 'self', 'calm', 'gift', 'floral', 'host', 'fresh', 'val
 const BADGES = ['Most Popular', 'Bestseller', 'Hot Selling', 'New', 'Set of 2', 'Tester Kit', 'Limited'];
 const options = (o: Record<string, string> | string[]) => (Array.isArray(o) ? o.map((v) => ({ value: v, label: v })) : Object.entries(o).map(([value, label]) => ({ value, label })));
 const chips = ['All', 'Live', 'Hidden', 'Low stock'];
+// ColorPicker gives a Color object once touched, a string before that
+const hexOf = (c: unknown) => (typeof c === 'string' ? c : c && typeof c === 'object' && 'toHexString' in c ? (c as { toHexString: () => string }).toHexString() : '').toUpperCase().slice(0, 7);
 
 export default function ProductsPage() {
   const [params] = useSearchParams();
@@ -42,7 +45,7 @@ export default function ProductsPage() {
       renderRow={(p) => ({
         avatar: <Avatar src={assetUrl(p.images[0])} text={p.name} />,
         title: p.name,
-        meta: `${CATEGORIES[p.category] ?? p.category} · ${p.subtitle || LINES[p.line]}${p.isActive ? '' : ' · hidden'}`,
+        meta: `${CATEGORIES[p.category] ?? p.category} · ${p.subtitle || LINES[p.line]}${p.colors?.length ? ` · ${p.colors.length} colours` : ''}${p.isActive ? '' : ' · hidden'}`,
         preview: `${inr(p.price)} · ${p.soldCount} sold${p.reviews > 0 ? ` · ★ ${p.rating}` : ''}`,
         badge: (
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.stock === 0 ? 'bg-red-50 text-red-600' : p.stock < 10 ? 'bg-[#F7EBCB] text-[#8a6d10]' : 'bg-cocoa-light text-cocoa-dark'}`}>
@@ -76,14 +79,19 @@ function ProductEditor({ id, onSaved, onDeleted }: { id: string | null; onSaved:
   const [saving, setSaving] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
 
+  // Existing variant groups, suggested when linking pack sizes
+  const [groups, setGroups] = useState<string[]>([]);
   useEffect(() => {
     api<{ items: Collection[] }>('/collections').then((r) => setCollections(r.items)).catch(() => undefined);
+    api<{ items: Product[] }>('/products', { query: { limit: 100 } })
+      .then((r) => setGroups([...new Set(r.items.map((p) => p.variantGroup).filter(Boolean))].sort()))
+      .catch(() => undefined);
   }, []);
 
-  const toForm = (p: Partial<Product>) => ({ ...p, images: p.images?.join('\n'), includes: p.includes?.join('\n'), howToUse: p.howToUse?.join('\n') });
+  const toForm = (p: Partial<Product>) => ({ ...p, includes: p.includes?.join('\n'), howToUse: p.howToUse?.join('\n') });
   // The pane remounts per selection, so the "new product" defaults can be the initial state
   const [initial, setInitial] = useState<Record<string, unknown>>(() =>
-    id ? {} : toForm({ line: 'handcrafted', category: 'floral', stock: 20, isActive: true, rating: 5, reviews: 0, collections: [], moods: [], includes: [], howToUse: [] }),
+    id ? {} : toForm({ line: 'handcrafted', category: 'floral', stock: 20, isActive: true, rating: 0, reviews: 0, collections: [], moods: [], images: [], colors: [], includes: [], howToUse: [] }),
   );
 
   useEffect(() => {
@@ -103,7 +111,19 @@ function ProductEditor({ id, onSaved, onDeleted }: { id: string | null; onSaved:
     const lines = (x: unknown) => String(x ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
     // Cleared number inputs come back as null — drop them so optional fields stay unset
     const clean = Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null && x !== undefined));
-    const body = { ...clean, badge: v.badge ?? '', images: lines(v.images), includes: lines(v.includes), howToUse: lines(v.howToUse) };
+    const colors = ((v.colors as { name?: string; hex?: unknown; images?: string[] }[] | undefined) ?? [])
+      .filter((c) => c?.name?.trim())
+      .map((c) => ({ name: c.name!.trim(), hex: hexOf(c.hex), images: c.images ?? [] }));
+    const body = {
+      ...clean,
+      badge: v.badge ?? '',
+      images: (v.images as string[] | undefined) ?? [],
+      colors,
+      variantGroup: String(v.variantGroup ?? '').trim(),
+      variantLabel: String(v.variantLabel ?? '').trim(),
+      includes: lines(v.includes),
+      howToUse: lines(v.howToUse),
+    };
     try {
       const r = id
         ? await api<{ product: Product }>(`/products/${id}`, { method: 'PUT', body })
@@ -127,8 +147,6 @@ function ProductEditor({ id, onSaved, onDeleted }: { id: string | null; onSaved:
     }
   };
 
-  const watchedImages = Form.useWatch('images', form);
-  const images: string[] = String(watchedImages ?? '').split('\n').map((s) => s.trim()).filter(Boolean);
   if (loading) return <div className="p-6"><Skeleton active avatar paragraph={{ rows: 10 }} /></div>;
 
   return (
@@ -153,11 +171,11 @@ function ProductEditor({ id, onSaved, onDeleted }: { id: string | null; onSaved:
       />
       <div className="p-4 md:p-5">
         <Form key={product?._id ?? 'new'} form={form} initialValues={initial} layout="vertical" onFinish={save} requiredMark={false} className="space-y-4">
-          {images.length > 0 && (
-            <Pane className="flex gap-2 overflow-x-auto">
-              {images.map((src) => <img key={src} src={assetUrl(src)} alt="" className="h-24 w-20 shrink-0 rounded-xl object-cover" />)}
-            </Pane>
-          )}
+          <Pane>
+            <Form.Item name="images" label="Photos" extra="Upload several photos at once (JPG / PNG / WebP). The first photo is the cover — use the arrows to reorder." className="mb-0">
+              <ImageListEditor />
+            </Form.Item>
+          </Pane>
           <Pane className="grid gap-x-4 sm:grid-cols-2 xl:grid-cols-3">
             <Form.Item name="name" label="Name" rules={[{ required: true, min: 2 }]} className="sm:col-span-2"><Input /></Form.Item>
             <Form.Item name="subtitle" label="Subtitle"><Input placeholder="e.g. Set of 2 Mini Candles" /></Form.Item>
@@ -179,9 +197,41 @@ function ProductEditor({ id, onSaved, onDeleted }: { id: string | null; onSaved:
           <Pane className="grid gap-x-4 sm:grid-cols-2">
             <Form.Item name="collections" label="Collections (shop menu)"><Select mode="multiple" optionFilterProp="label" options={collections.map((c) => ({ value: c.slug, label: c.isActive ? c.name : `${c.name} (hidden)` }))} /></Form.Item>
             <Form.Item name="moods" label="Moods (scent finder quiz)"><Select mode="tags" options={options(MOODS)} /></Form.Item>
-            <Form.Item name="images" label="Image URLs (one per line — first is the cover)" className="sm:col-span-2" extra="Paths like /images/products/xyz.jpg are served by the website.">
-              <Input.TextArea rows={3} />
+          </Pane>
+          <Pane>
+            <p className="mb-1 font-semibold">Colour options</p>
+            <p className="mb-3 text-xs text-black/50">Customers pick a colour on the product page. Add photos for each colour — they replace the gallery when that colour is chosen. Leave empty if the product has no colour choice.</p>
+            <Form.List name="colors">
+              {(fields, { add, remove }) => (
+                <div className="space-y-3">
+                  {fields.map(({ key, name }) => (
+                    <div key={key} className="rounded-xl border border-black/10 p-3">
+                      <div className="flex flex-wrap items-start gap-3">
+                        <Form.Item name={[name, 'name']} label="Colour name" rules={[{ required: true, message: 'Name the colour' }]} className="mb-2 min-w-[160px] flex-1">
+                          <Input placeholder="e.g. Pastel Pink" />
+                        </Form.Item>
+                        <Form.Item name={[name, 'hex']} label="Swatch" className="mb-2">
+                          <ColorPicker format="hex" disabledAlpha />
+                        </Form.Item>
+                        <Button type="text" danger icon={<MinusCircleOutlined />} className="mt-7" onClick={() => remove(name)}>Remove</Button>
+                      </div>
+                      <Form.Item name={[name, 'images']} label="Photos of this colour" className="mb-0">
+                        <ImageListEditor compact />
+                      </Form.Item>
+                    </div>
+                  ))}
+                  <Button icon={<PlusOutlined />} onClick={() => add({ name: '', hex: '#C47A5A', images: [] })}>Add colour</Button>
+                </div>
+              )}
+            </Form.List>
+          </Pane>
+          <Pane className="grid gap-x-4 sm:grid-cols-2">
+            <p className="mb-1 font-semibold sm:col-span-2">Pack / quantity options</p>
+            <p className="mb-3 text-xs text-black/50 sm:col-span-2">Products with the same group are shown as choices on each other's page (e.g. Single · Pack of 2 · Pack of 4), each with its own price and stock.</p>
+            <Form.Item name="variantGroup" label="Variant group" rules={[{ pattern: /^[a-z0-9-]*$/, message: 'lowercase letters, numbers and dashes' }]}>
+              <AutoComplete options={groups.map((g) => ({ value: g }))} placeholder="e.g. lotus-pond" filterOption={(i, o) => String(o?.value).includes(i)} allowClear />
             </Form.Item>
+            <Form.Item name="variantLabel" label="Option label"><Input placeholder="e.g. Pack of 2" /></Form.Item>
           </Pane>
           <Pane>
             <Form.Item name="tagline" label="Tagline"><Input /></Form.Item>

@@ -5,6 +5,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   fragrance?: string;
+  color?: string;
 }
 
 export interface Order {
@@ -30,6 +31,12 @@ export interface Order {
   account?: { _id: string; name: string; email: string; phone: string } | null;
 }
 
+export interface ProductColor {
+  name: string;
+  hex: string;
+  images: string[];
+}
+
 export interface Product {
   id: string; // slug — what the website uses
   _id: string;
@@ -52,6 +59,9 @@ export interface Product {
   howToUse: string[];
   fragrances: boolean;
   images: string[];
+  colors: ProductColor[];
+  variantGroup: string;
+  variantLabel: string;
   stock: number;
   soldCount: number;
   isActive: boolean;
