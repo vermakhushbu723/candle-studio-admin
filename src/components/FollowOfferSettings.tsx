@@ -1,4 +1,4 @@
-import { Alert, Button, Form, Input, InputNumber, Skeleton, Space, Switch, Table, Tag, message } from 'antd';
+import { Alert, Button, Form, Input, InputNumber, Popconfirm, Skeleton, Space, Switch, Table, Tag, message } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { api, WEBSITE_URL } from '@/api/client';
@@ -19,6 +19,8 @@ interface Offer {
 interface Claim {
   id: string;
   customer?: { name?: string; phone?: string; email?: string };
+  handle: string;
+  status: 'pending' | 'approved';
   couponCode: string;
   used: boolean;
   expiry?: string;
@@ -47,6 +49,17 @@ export default function FollowOfferSettings() {
       .catch(() => undefined);
   };
   useEffect(load, []);
+
+  const review = async (c: Claim, action: 'approve' | 'reject') => {
+    try {
+      const r = await api<{ message: string }>(`/offers/follow/claims/${c.id}`, { method: 'PATCH', body: { action } });
+      message.success(r.message);
+      load();
+    } catch (e) {
+      message.error((e as Error).message);
+    }
+  };
+  const pending = claims.filter((c) => c.status === 'pending').length;
 
   const save = async (v: Offer) => {
     setSaving(true);
@@ -111,7 +124,11 @@ export default function FollowOfferSettings() {
         </Form>
       </Pane>
       <Pane>
-        <p className="mb-3 font-medium">Recent claims</p>
+        <p className="mb-1 font-medium">Recent claims {pending > 0 && <Tag color="orange">{pending} waiting for check</Tag>}</p>
+        <p className="mb-3 text-xs text-gray-500">
+          Instagram and Facebook don't tell websites who follows a page. Open the username, check it follows Jyotessa, then Approve —
+          the customer's coupon only works after that. Reject removes the claim so they can follow and try again.
+        </p>
         <Table<Claim>
           size="small"
           rowKey="id"
@@ -120,8 +137,25 @@ export default function FollowOfferSettings() {
           scroll={{ x: true }}
           columns={[
             { title: 'Customer', render: (_, c) => <span>{c.customer?.name ?? '—'}<br /><span className="text-xs text-gray-500">{c.customer?.phone ? `+91 ${c.customer.phone}` : c.customer?.email}</span></span> },
+            {
+              title: 'Username',
+              dataIndex: 'handle',
+              render: (v: string) =>
+                v ? <a href={`https://www.instagram.com/${encodeURIComponent(v)}/`} target="_blank" rel="noreferrer">@{v}</a> : '—',
+            },
             { title: 'Coupon', dataIndex: 'couponCode', render: (v: string) => <code>{v}</code> },
-            { title: 'Status', render: (_, c) => (c.used ? <Tag color="green">Used</Tag> : <Tag>Not used</Tag>) },
+            {
+              title: 'Status',
+              render: (_, c) =>
+                c.status === 'pending' ? (
+                  <Space size={4}>
+                    <Button size="small" type="primary" onClick={() => review(c, 'approve')}>Approve</Button>
+                    <Popconfirm title="Reject this claim?" description="The coupon is removed; the customer can claim again." onConfirm={() => review(c, 'reject')}>
+                      <Button size="small" danger>Reject</Button>
+                    </Popconfirm>
+                  </Space>
+                ) : c.used ? <Tag color="green">Used</Tag> : <Tag color="blue">Active</Tag>,
+            },
             { title: 'Claimed', dataIndex: 'at', render: (v: string) => date(v) },
             { title: 'Expires', dataIndex: 'expiry', render: (v: string) => date(v) },
           ]}

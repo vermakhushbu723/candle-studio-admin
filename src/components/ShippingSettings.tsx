@@ -1,4 +1,4 @@
-import { Alert, Button, Form, InputNumber, Skeleton, Switch, message } from 'antd';
+import { Alert, Button, Form, InputNumber, Select, Skeleton, Switch, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import { Pane } from '@/components/MasterDetail';
@@ -8,7 +8,10 @@ interface Shipping {
   shippingFee: number;
   freeShippingEnabled: boolean;
   freeShippingAbove: number;
+  deliveryStates: string[];
 }
+
+const STATES = ['Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'];
 
 /** Shipping charge + free-shipping threshold used by the website cart, checkout and order totals. */
 export default function ShippingSettings() {
@@ -57,7 +60,14 @@ export default function ShippingSettings() {
           >
             <InputNumber min={0} max={1000000} precision={0} prefix="₹" className="w-full" disabled={!s.freeShippingEnabled} />
           </Form.Item>
-          <Button type="primary" htmlType="submit" loading={saving}>Save shipping charges</Button>
+          <Form.Item
+            name="deliveryStates"
+            label="We deliver to"
+            extra="Checkout only accepts addresses (state + pincode) in these states. Leave empty to deliver across India."
+          >
+            <Select mode="multiple" allowClear placeholder="All of India" options={STATES.map((v) => ({ value: v, label: v }))} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={saving}>Save shipping settings</Button>
         </Form>
       </Pane>
       <Alert
@@ -65,11 +75,12 @@ export default function ShippingSettings() {
         showIcon
         message="What customers will see"
         description={
-          s.shippingFee === 0
+          (s.deliveryStates?.length ? `Delivery only in ${s.deliveryStates.join(', ')}. ` : 'Delivery across India. ') +
+          (s.shippingFee === 0
             ? 'Free shipping on every order.'
             : s.freeShippingEnabled
               ? `Free shipping on orders of ${inr(s.freeShippingAbove)} or more; ${inr(s.shippingFee)} below that.`
-              : `A flat ${inr(s.shippingFee)} shipping charge on every order.`
+              : `A flat ${inr(s.shippingFee)} shipping charge on every order.`)
         }
       />
     </div>
