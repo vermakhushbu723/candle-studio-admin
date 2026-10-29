@@ -6,6 +6,7 @@ export interface OrderItem {
   quantity: number;
   fragrance?: string;
   color?: string;
+  pack?: string;
 }
 
 export interface Order {
@@ -29,6 +30,13 @@ export interface Order {
   awb?: string;
   razorpayPaymentId?: string;
   account?: { _id: string; name: string; email: string; phone: string } | null;
+}
+
+export interface ProductPack {
+  label: string;
+  price: number;
+  compareAt?: number;
+  images: string[];
 }
 
 export interface ProductColor {
@@ -59,7 +67,9 @@ export interface Product {
   howToUse: string[];
   fragrances: boolean;
   images: string[];
+  packs: ProductPack[];
   colors: ProductColor[];
+  fragranceOptions: string[];
   variantGroup: string;
   variantLabel: string;
   stock: number;

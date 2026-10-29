@@ -89,6 +89,7 @@ export default function OrderDetail({ id, onChanged }: { id: string; onChanged?:
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">{i.name}</p>
                       {i.fragrance && <p className="text-xs text-char/55">Fragrance: {FRAGRANCES[i.fragrance] ?? i.fragrance}</p>}
+                      {i.pack && <p className="text-xs text-char/55">Pack: {i.pack}</p>}
                       {i.color && <p className="text-xs text-char/55">Colour: {i.color}</p>}
                     </div>
                     <div className="text-right text-sm">
